@@ -1,0 +1,9 @@
+﻿bin/
+obj/
+*.user
+*.suo
+*.swp
+*.DS_Store
+appsettings.*.local.json
+App_Data/*.db-shm
+App_Data/*.db-wal

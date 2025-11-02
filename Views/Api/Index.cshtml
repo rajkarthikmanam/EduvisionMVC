@@ -1,0 +1,27 @@
+@model IEnumerable<EduvisionMvc.Controllers.ApiController.ApiRow>
+@{ ViewData["Title"] = "API"; }
+
+<div class="content-card">
+  <h1>API Demo (fetch-only)</h1>
+
+  <form method="get" style="display:flex;gap:10px;align-items:center;margin:10px 0;">
+    <label>Source:</label>
+    <select class="form-control" name="source">
+      <option value="products" selected>Products (dummyjson)</option>
+      <option value="posts">Posts (jsonplaceholder)</option>
+      <option value="publicapis">Public APIs</option>
+    </select>
+    <button class="btn">Fetch</button>
+  </form>
+
+  @if (ViewBag.Error != null) {
+    <div class="badge err">@ViewBag.Error</div>
+  }
+
+  <table class="table">
+    <thead><tr><th>Title / Name</th><th>Info</th><th>Source</th></tr></thead>
+    <tbody>
+      @foreach (var r in Model) { <tr><td>@r.Col1</td><td>@r.Col2</td><td>@r.Source</td></tr> }
+    </tbody>
+  </table>
+</div>
