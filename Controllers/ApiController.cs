@@ -1,3 +1,4 @@
+﻿// Karthik: resilient API controller (multi-source + graceful errors)
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 
@@ -66,3 +67,4 @@ public class ApiController : Controller
     public record PublicApisRoot(List<Entry> entries = null);
     public record Entry(string API, string Description, string Category);
 }
+
