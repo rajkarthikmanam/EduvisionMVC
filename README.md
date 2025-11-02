@@ -8,9 +8,3 @@ API demo (/Api), and a Chart.js visualization.
 - CRUD: Students, Courses, Enrollments (+ Departments, Instructors).
 - API demo: /Api (multiple public sources, graceful error handling).
 - Visualization: /Home/Visualize calls /api/charts/gradesByCourse (Chart.js).
-## Technical Overview
-
-- EF Core with SQLite (dev). Azure SQL supported for production.
-- CRUD: Students, Courses, Enrollments (+ Departments, Instructors).
-- API demo: /Api (multiple public sources, graceful error handling).
-- Visualization: /Home/Visualize calls /api/charts/gradesByCourse (Chart.js).
