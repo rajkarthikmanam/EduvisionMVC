@@ -20,7 +20,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // (Optional) JSON for chart from Enrollments DB data
-app.MapGet("/api/charts/gradesByCourse", async (AppDbContext db) =>
+// Karthik: JSON for Chart.js (avg grade by course)`r`napp.MapGet("/api/charts/gradesByCourse", async (AppDbContext db) =>
 {
     var q = db.Enrollments
         .Include(e => e.Course)
@@ -33,3 +33,4 @@ app.MapGet("/api/charts/gradesByCourse", async (AppDbContext db) =>
 });
 
 app.Run();
+
