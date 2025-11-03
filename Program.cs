@@ -33,3 +33,22 @@ app.MapGet("/api/charts/gradesByCourse", async (AppDbContext db) =>
 });
 
 app.Run();
+/* Karthik: minimal health & stats endpoints */
+app.MapGet("/api/health", () =>
+{
+    return Results.Json(new {
+        status = "ok",
+        timeUtc = DateTime.UtcNow
+    });
+});
+
+app.MapGet("/api/stats", (EduvisionMvc.Data.AppDbContext db) =>
+{
+    var students = db.Students.Count();
+    var courses  = db.Courses.Count();
+    var depts    = db.Departments.Count();
+    var instrs   = db.Instructors.Count();
+    return Results.Json(new {
+        students, courses, departments = depts, instructors = instrs
+    });
+});
