@@ -1,170 +1,121 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using EduvisionMvc.Data;
 using EduvisionMvc.Models;
 
-namespace EduvisionMvc.Controllers
+namespace EduvisionMvc.Controllers;
+
+public class EnrollmentsController : Controller
 {
-    public class EnrollmentsController : Controller
+    private readonly AppDbContext _context;
+    public EnrollmentsController(AppDbContext context) => _context = context;
+
+    // ---------- LIST ----------
+    public async Task<IActionResult> Index()
     {
-        private readonly AppDbContext _context;
+        var q = _context.Enrollments
+            .Include(e => e.Student)
+            .Include(e => e.Course)
+                .ThenInclude(c => c.CourseInstructors)
+                    .ThenInclude(ci => ci.Instructor);
 
-        public EnrollmentsController(AppDbContext context)
+        var data = await q.OrderBy(e => e.Student.Name)
+                          .ThenBy(e => e.Course.Title)
+                          .ToListAsync();
+        return View(data);
+    }
+
+    // ---------- DETAILS ----------
+    public async Task<IActionResult> Details(int id)
+    {
+        var e = await _context.Enrollments
+            .Include(x => x.Student)
+            .Include(x => x.Course)
+                .ThenInclude(c => c.CourseInstructors)
+                    .ThenInclude(ci => ci.Instructor)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (e == null) return NotFound();
+        return View(e);
+    }
+
+    // ---------- CREATE ----------
+    [HttpGet]
+    public IActionResult Create()
+    {
+        ViewData["StudentId"] = new SelectList(_context.Students.OrderBy(s => s.Name), "Id", "Name");
+        ViewData["CourseId"]  = new SelectList(_context.Courses.OrderBy(c => c.Title), "Id", "Title");
+        return View(new Enrollment { Term = "Fall 2025" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create([Bind("Id,StudentId,CourseId,Term,Numeric_Grade")] Enrollment enrollment)
+    {
+        if (ModelState.IsValid)
         {
-            _context = context;
+            _context.Add(enrollment);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
+        ViewData["StudentId"] = new SelectList(_context.Students.OrderBy(s => s.Name), "Id", "Name", enrollment.StudentId);
+        ViewData["CourseId"]  = new SelectList(_context.Courses.OrderBy(c => c.Title), "Id", "Title", enrollment.CourseId);
+        return View(enrollment);
+    }
 
-        // GET: Enrollments
-        public async Task<IActionResult> Index()
+    // ---------- EDIT ----------
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var enrollment = await _context.Enrollments.FindAsync(id);
+        if (enrollment == null) return NotFound();
+
+        ViewData["StudentId"] = new SelectList(_context.Students.OrderBy(s => s.Name), "Id", "Name", enrollment.StudentId);
+        ViewData["CourseId"]  = new SelectList(_context.Courses.OrderBy(c => c.Title), "Id", "Title", enrollment.CourseId);
+        return View(enrollment);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, [Bind("Id,StudentId,CourseId,Term,Numeric_Grade")] Enrollment enrollment)
+    {
+        if (id != enrollment.Id) return NotFound();
+
+        if (ModelState.IsValid)
         {
-            var appDbContext = _context.Enrollments.Include(e => e.Course).Include(e => e.Student);
-            return View(await appDbContext.ToListAsync());
-        }
-
-        // GET: Enrollments/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var enrollment = await _context.Enrollments
-                .Include(e => e.Course)
-                .Include(e => e.Student)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (enrollment == null)
-            {
-                return NotFound();
-            }
-
-            return View(enrollment);
-        }
-
-        // GET: Enrollments/Create
-        public IActionResult Create()
-        {
-            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id");
-            ViewData["StudentId"] = new SelectList(_context.Students, "Id", "Id");
-            return View();
-        }
-
-        // POST: Enrollments/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,StudentId,CourseId,Term,Numeric_Grade")] Enrollment enrollment)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(enrollment);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id", enrollment.CourseId);
-            ViewData["StudentId"] = new SelectList(_context.Students, "Id", "Id", enrollment.StudentId);
-            return View(enrollment);
-        }
-
-        // GET: Enrollments/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var enrollment = await _context.Enrollments.FindAsync(id);
-            if (enrollment == null)
-            {
-                return NotFound();
-            }
-            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id", enrollment.CourseId);
-            ViewData["StudentId"] = new SelectList(_context.Students, "Id", "Id", enrollment.StudentId);
-            return View(enrollment);
-        }
-
-        // POST: Enrollments/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,StudentId,CourseId,Term,Numeric_Grade")] Enrollment enrollment)
-        {
-            if (id != enrollment.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(enrollment);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EnrollmentExists(enrollment.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id", enrollment.CourseId);
-            ViewData["StudentId"] = new SelectList(_context.Students, "Id", "Id", enrollment.StudentId);
-            return View(enrollment);
-        }
-
-        // GET: Enrollments/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var enrollment = await _context.Enrollments
-                .Include(e => e.Course)
-                .Include(e => e.Student)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (enrollment == null)
-            {
-                return NotFound();
-            }
-
-            return View(enrollment);
-        }
-
-        // POST: Enrollments/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var enrollment = await _context.Enrollments.FindAsync(id);
-            if (enrollment != null)
-            {
-                _context.Enrollments.Remove(enrollment);
-            }
-
+            _context.Update(enrollment);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool EnrollmentExists(int id)
-        {
-            return _context.Enrollments.Any(e => e.Id == id);
-        }
+        ViewData["StudentId"] = new SelectList(_context.Students.OrderBy(s => s.Name), "Id", "Name", enrollment.StudentId);
+        ViewData["CourseId"]  = new SelectList(_context.Courses.OrderBy(c => c.Title), "Id", "Title", enrollment.CourseId);
+        return View(enrollment);
+    }
+
+    // ---------- DELETE ----------
+    [HttpGet]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var e = await _context.Enrollments
+            .Include(x => x.Student)
+            .Include(x => x.Course)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (e == null) return NotFound();
+        return View(e);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var e = await _context.Enrollments.FindAsync(id);
+        if (e == null) return NotFound();
+
+        _context.Enrollments.Remove(e);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
     }
 }

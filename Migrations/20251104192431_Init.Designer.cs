@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EduvisionMvc.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251102052948_AddDeptAndInstructor")]
-    partial class AddDeptAndInstructor
+    [Migration("20251104192431_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,7 +47,30 @@ namespace EduvisionMvc.Migrations
 
                     b.HasIndex("DepartmentId");
 
+                    b.HasIndex("Code", "DepartmentId")
+                        .IsUnique();
+
                     b.ToTable("Courses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "CS101",
+                            Credits = 3,
+                            DepartmentId = 1,
+                            Dept = "",
+                            Title = "Intro CS"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "MTH201",
+                            Credits = 4,
+                            DepartmentId = 2,
+                            Dept = "",
+                            Title = "Calculus I"
+                        });
                 });
 
             modelBuilder.Entity("EduvisionMvc.Models.CourseInstructor", b =>
@@ -63,6 +86,18 @@ namespace EduvisionMvc.Migrations
                     b.HasIndex("InstructorId");
 
                     b.ToTable("CourseInstructors");
+
+                    b.HasData(
+                        new
+                        {
+                            CourseId = 1,
+                            InstructorId = 1
+                        },
+                        new
+                        {
+                            CourseId = 2,
+                            InstructorId = 2
+                        });
                 });
 
             modelBuilder.Entity("EduvisionMvc.Models.Department", b =>
@@ -82,6 +117,20 @@ namespace EduvisionMvc.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Departments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "",
+                            Name = "CS"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "",
+                            Name = "Math"
+                        });
                 });
 
             modelBuilder.Entity("EduvisionMvc.Models.Enrollment", b =>
@@ -110,12 +159,33 @@ namespace EduvisionMvc.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("Enrollments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CourseId = 1,
+                            Numeric_Grade = 3.8m,
+                            StudentId = 1,
+                            Term = "Fall 2025"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CourseId = 2,
+                            Numeric_Grade = 3.6m,
+                            StudentId = 2,
+                            Term = "Fall 2025"
+                        });
                 });
 
             modelBuilder.Entity("EduvisionMvc.Models.Instructor", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DepartmentId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")
@@ -132,7 +202,27 @@ namespace EduvisionMvc.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DepartmentId");
+
                     b.ToTable("Instructors");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DepartmentId = 1,
+                            Email = "gray@univ.edu",
+                            FirstName = "Dr.",
+                            LastName = "Gray"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DepartmentId = 2,
+                            Email = "hall@univ.edu",
+                            FirstName = "Dr.",
+                            LastName = "Hall"
+                        });
                 });
 
             modelBuilder.Entity("EduvisionMvc.Models.Student", b =>
@@ -159,6 +249,24 @@ namespace EduvisionMvc.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Students");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Age = 20,
+                            Gpa = 3.70m,
+                            Major = "CS",
+                            Name = "Ava"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Age = 21,
+                            Gpa = 3.50m,
+                            Major = "Math",
+                            Name = "Liam"
+                        });
                 });
 
             modelBuilder.Entity("EduvisionMvc.Models.Course", b =>
@@ -206,6 +314,17 @@ namespace EduvisionMvc.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("EduvisionMvc.Models.Instructor", b =>
+                {
+                    b.HasOne("EduvisionMvc.Models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("EduvisionMvc.Models.Course", b =>
