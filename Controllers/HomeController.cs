@@ -13,16 +13,20 @@ public class HomeController : Controller
         _logger = logger;
     }
 
-    // Home
-    public IActionResult Index() => View();
+    // Home page
+    public IActionResult Index()
+    {
+        ViewData["Title"] = "Home";
+        return View();
+    }
 
-    // NEW: Visualization page
+    // Visualization
     public IActionResult Visualize() => View();
 
-    // NEW: About page
+    // About
     public IActionResult About() => View();
 
-    // (Optional) keep Privacy or remove if unused
+    // Optional: Privacy
     public IActionResult Privacy() => View();
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

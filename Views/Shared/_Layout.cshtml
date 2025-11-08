@@ -6,27 +6,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@ViewData["Title"] - EduvisionMvc</title>
+  <title>@ViewData["Title"] - EduVision</title>
 
-  <!-- Bootstrap (keep) -->
+  <!-- Bootstrap core -->
   <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
-  <!-- Your theme (keep) -->
+  <!-- Site styles -->
   <link rel="stylesheet" href="~/assets/css/styles.css" asp-append-version="true" />
-
-  <!-- Botpress loader + embed styles -->
-  <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
-  <style>
-    #webchat .bpWebchat {
-      position: unset;
-      width: 100%;
-      height: 100%;
-      max-height: 100%;
-      max-width: 100%;
-    }
-    #webchat .bpFab { display: none; } /* hide floating FAB since we embed the panel */
-  </style>
 </head>
+
 <body>
   <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -44,14 +32,14 @@
             <li class="nav-item"><a class="nav-link" asp-controller="Charts" asp-action="Index">Visualization</a></li>
             <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="About">About</a></li>
 
-            <!-- CRUD -->
+            <!-- CRUD links -->
             <li class="nav-item"><a class="nav-link" asp-controller="Students" asp-action="Index">Students</a></li>
             <li class="nav-item"><a class="nav-link" asp-controller="Courses" asp-action="Index">Courses</a></li>
             <li class="nav-item"><a class="nav-link" asp-controller="Enrollments" asp-action="Index">Enrollments</a></li>
             <li class="nav-item"><a class="nav-link" asp-controller="Departments" asp-action="Index">Departments</a></li>
             <li class="nav-item"><a class="nav-link" asp-controller="Instructors" asp-action="Index">Instructors</a></li>
 
-            <!-- API UI page (keep your Pages/Api view) -->
+            <!-- API reference page -->
             <li class="nav-item"><a class="nav-link" asp-controller="Pages" asp-action="Api">API</a></li>
           </ul>
         </div>
@@ -62,52 +50,59 @@
   <div class="container">
     <main role="main" class="pb-3">
       @RenderBody()
-
-      <!-- Embedded Botpress panel -->
-      <div id="webchat" style="width: 500px; height: 500px;"></div>
     </main>
   </div>
 
-  <footer class="border-top footer text-muted">
+  <footer class="border-top footer text-muted mt-4">
     <div class="container">
-      &copy; @DateTime.UtcNow.Year - EDUVISION
+      &copy; @DateTime.UtcNow.Year - EduVision
     </div>
   </footer>
 
-  <!-- Scripts -->
+  <!-- Scripts at bottom -->
   <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="~/assets/js/main.js" asp-append-version="true"></script>
   <script src="~/assets/js/charts.js" asp-append-version="true"></script>
 
-  <!-- Botpress init -->
+  <!-- ✅ Botpress Floating Chat Bubble (Final Working Version) -->
+  <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
   <script>
-    // Open on load (optional)
-    window.botpress?.on?.("webchat:ready", () => {
-      window.botpress.open();
-    });
+    window.addEventListener("load", function () {
+      setTimeout(function () {
+        try {
+          window.botpressWebChat.init({
+            botId: "1d03a94e-6971-4d3f-bd61-0514cd7dd234",
+            clientId: "b25eea09-e897-4538-afa8-6c280ac089f2",
+            botName: "EduVision Assistant",
+            showOnLoad: false,          // 👈 bubble visible, chat closed
+            hideWidget: false,
+            themeMode: "light",
+            color: "#257caf",
+            theme: "prism",
+            layoutWidth: "370px",
+            layoutHeight: "480px",
+            composerPlaceholder: "Ask EduVision..."
+          });
 
-    window.botpress.init({
-      botId: "1d03a94e-6971-4d3f-bd61-0514cd7dd234",
-      clientId: "b25eea09-e897-4538-afa8-6c280ac089f2",
-      selector: "#webchat",
-      configuration: {
-        version: "v2",
-        botName: "EduVision Help Assistant",
-        botDescription: "",
-        color: "#257caf",
-        variant: "solid",
-        headerVariant: "glass",
-        themeMode: "light",
-        fontFamily: "inter",
-        radius: 2,
-        feedbackEnabled: false,
-        footer: "[⚡ by Botpress](https://botpress.com/?from=webchat)",
-        soundEnabled: false,
-        proactiveMessageEnabled: false,
-        proactiveBubbleMessage: "Hi! 👋 Need help?",
-        proactiveBubbleTriggerType: "afterDelay",
-        proactiveBubbleDelayTime: 10
-      }
+          // force bubble visible above footer
+          const ensureBubble = () => {
+            const bubble = document.querySelector('.bp-widget-button');
+            if (bubble) {
+              bubble.style.display = 'block';
+              bubble.style.position = 'fixed';
+              bubble.style.zIndex = '99999';
+              bubble.style.bottom = '24px';
+              bubble.style.right = '24px';
+            } else {
+              setTimeout(ensureBubble, 500);
+            }
+          };
+          ensureBubble();
+          console.log("✅ Botpress bubble initialized");
+        } catch (err) {
+          console.error("❌ Botpress init error", err);
+        }
+      }, 800);
     });
   </script>
 
