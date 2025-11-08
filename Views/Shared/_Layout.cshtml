@@ -1,18 +1,31 @@
-﻿<html lang="en">
+﻿@*
+  Views/Shared/_Layout.cshtml
+*@
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>@ViewData["Title"] - EduvisionMvc</title>
 
-  <!-- Optional Bootstrap (keep if you want) -->
+  <!-- Bootstrap (keep) -->
   <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
-  @* Remove the template CSS to avoid conflicts *@
-  @* <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" /> *@
-  @* <link rel="stylesheet" href="~/EduvisionMvc.styles.css" asp-append-version="true" /> *@
-
-  <!-- ✅ Your theme -->
+  <!-- Your theme (keep) -->
   <link rel="stylesheet" href="~/assets/css/styles.css" asp-append-version="true" />
+
+  <!-- Botpress loader + embed styles -->
+  <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+  <style>
+    #webchat .bpWebchat {
+      position: unset;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      max-width: 100%;
+    }
+    #webchat .bpFab { display: none; } /* hide floating FAB since we embed the panel */
+  </style>
 </head>
 <body>
   <header>
@@ -28,19 +41,18 @@
         <div id="mainNav" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
           <ul class="navbar-nav flex-grow-1">
             <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
-            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Visualize">Visualization</a></li>
+            <li class="nav-item"><a class="nav-link" asp-controller="Charts" asp-action="Index">Visualization</a></li>
             <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="About">About</a></li>
-            
 
             <!-- CRUD -->
             <li class="nav-item"><a class="nav-link" asp-controller="Students" asp-action="Index">Students</a></li>
             <li class="nav-item"><a class="nav-link" asp-controller="Courses" asp-action="Index">Courses</a></li>
             <li class="nav-item"><a class="nav-link" asp-controller="Enrollments" asp-action="Index">Enrollments</a></li>
-            <li class="nav-item"><a class="nav-link text-dark" asp-controller="Departments" asp-action="Index">Departments</a></li>
-            <li class="nav-item"><a class="nav-link text-dark" asp-controller="Instructors" asp-action="Index">Instructors</a></li>
+            <li class="nav-item"><a class="nav-link" asp-controller="Departments" asp-action="Index">Departments</a></li>
+            <li class="nav-item"><a class="nav-link" asp-controller="Instructors" asp-action="Index">Instructors</a></li>
 
-
-            <li class="nav-item"><a class="nav-link text-dark" asp-controller="Api" asp-action="Index">API</a></li>
+            <!-- API UI page (keep your Pages/Api view) -->
+            <li class="nav-item"><a class="nav-link" asp-controller="Pages" asp-action="Api">API</a></li>
           </ul>
         </div>
       </div>
@@ -50,6 +62,9 @@
   <div class="container">
     <main role="main" class="pb-3">
       @RenderBody()
+
+      <!-- Embedded Botpress panel -->
+      <div id="webchat" style="width: 500px; height: 500px;"></div>
     </main>
   </div>
 
@@ -61,13 +76,40 @@
 
   <!-- Scripts -->
   <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-  @* Remove template JS if unused *@
-  @* <script src="~/js/site.js" asp-append-version="true"></script> *@
-
-  <!-- ✅ Your scripts (ok to include globally; harmless on pages that don't use them) -->
   <script src="~/assets/js/main.js" asp-append-version="true"></script>
   <script src="~/assets/js/charts.js" asp-append-version="true"></script>
+
+  <!-- Botpress init -->
+  <script>
+    // Open on load (optional)
+    window.botpress?.on?.("webchat:ready", () => {
+      window.botpress.open();
+    });
+
+    window.botpress.init({
+      botId: "1d03a94e-6971-4d3f-bd61-0514cd7dd234",
+      clientId: "b25eea09-e897-4538-afa8-6c280ac089f2",
+      selector: "#webchat",
+      configuration: {
+        version: "v2",
+        botName: "EduVision Help Assistant",
+        botDescription: "",
+        color: "#257caf",
+        variant: "solid",
+        headerVariant: "glass",
+        themeMode: "light",
+        fontFamily: "inter",
+        radius: 2,
+        feedbackEnabled: false,
+        footer: "[⚡ by Botpress](https://botpress.com/?from=webchat)",
+        soundEnabled: false,
+        proactiveMessageEnabled: false,
+        proactiveBubbleMessage: "Hi! 👋 Need help?",
+        proactiveBubbleTriggerType: "afterDelay",
+        proactiveBubbleDelayTime: 10
+      }
+    });
+  </script>
 
   @await RenderSectionAsync("Scripts", required: false)
 </body>

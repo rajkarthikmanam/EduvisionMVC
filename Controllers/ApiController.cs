@@ -1,70 +1,49 @@
-﻿// Karthik: resilient API controller (multi-source + graceful errors)
-using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace EduvisionMvc.Controllers;
 
-public class ApiController : Controller
+[ApiController]
+[Route("api/[controller]")]
+public class ApiController : ControllerBase
 {
-    private readonly IHttpClientFactory _http;
-    public ApiController(IHttpClientFactory http) => _http = http;
-
-    // Choose one of several stable public APIs via ?source=
-    // /Api?source=products or posts or publicapis
-    public async Task<IActionResult> Index(string source = "products")
+    private readonly IHttpClientFactory _httpClientFactory;
+    public ApiController(IHttpClientFactory httpClientFactory)
     {
-        var client = _http.CreateClient();
-        client.Timeout = TimeSpan.FromSeconds(8);
+        _httpClientFactory = httpClientFactory;
+    }
+
+    [HttpGet("books")]
+    public async Task<IActionResult> GetBooks([FromQuery] string q = "education")
+    {
+        var client = _httpClientFactory.CreateClient();
+        var url = $"https://openlibrary.org/search.json?q={Uri.EscapeDataString(q)}";
 
         try
         {
-            return source.ToLower() switch
-            {
-                "posts" => await Posts(client),
-                "publicapis" => await PublicApis(client),
-                _ => await Products(client) // default
-            };
+            var response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var doc = JsonDocument.Parse(json);
+
+            var items = doc.RootElement.GetProperty("docs")
+                .EnumerateArray()
+                .Take(10)
+                .Select(x => new
+                {
+                    title = x.TryGetProperty("title", out var t) ? t.GetString() : "",
+                    author = x.TryGetProperty("author_name", out var a) ? string.Join(", ", a.EnumerateArray().Select(ae => ae.GetString())) : "",
+                    year = x.TryGetProperty("first_publish_year", out var y) ? y.GetInt32().ToString() : "N/A"
+                });
+
+            return Ok(new { ok = true, source = "OpenLibrary", items });
         }
         catch (Exception ex)
         {
-            // Graceful UI message
-            ViewBag.Error = $"API call failed: {ex.Message}";
-            return View(Enumerable.Empty<ApiRow>());
+            return BadRequest(new { ok = false, error = ex.Message });
         }
     }
-
-    private async Task<IActionResult> Products(HttpClient c)
-    {
-        // https://dummyjson.com/products
-        var data = await c.GetFromJsonAsync<ProductsRoot>("https://dummyjson.com/products") 
-                   ?? new ProductsRoot();
-        var rows = data.products.Select(p => new ApiRow(p.title, $"${p.price}", "Products"));
-        return View(rows);
-    }
-
-    private async Task<IActionResult> Posts(HttpClient c)
-    {
-        // https://jsonplaceholder.typicode.com/posts
-        var posts = await c.GetFromJsonAsync<List<Post>>("https://jsonplaceholder.typicode.com/posts") 
-                    ?? new();
-        var rows = posts.Take(50).Select(p => new ApiRow(p.title, $"#{p.id}", "Posts"));
-        return View(rows);
-    }
-
-    private async Task<IActionResult> PublicApis(HttpClient c)
-    {
-        // https://api.publicapis.org/entries
-        var root = await c.GetFromJsonAsync<PublicApisRoot>("https://api.publicapis.org/entries") ?? new();
-        var rows = root.entries.Take(50).Select(e => new ApiRow(e.API, e.Category, "Public APIs"));
-        return View(rows);
-    }
-
-    // view models / DTOs
-    public record ApiRow(string Col1, string Col2, string Source);
-    public record ProductsRoot(List<Product> products = null);
-    public record Product(int id, string title, decimal price);
-    public record Post(int userId, int id, string title, string body);
-    public record PublicApisRoot(List<Entry> entries = null);
-    public record Entry(string API, string Description, string Category);
 }
-
